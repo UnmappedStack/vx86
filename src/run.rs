@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use lazy_static::lazy_static;
 
-use crate::{modrm::Modrm, parse::parse_prefixes, prefix::BitPrefix, reader::Reader, vm::VM};
+use crate::{eflags::eflags, modrm::Modrm, parse::parse_prefixes, prefix::BitPrefix, reader::Reader, reg::GPRReg, vm::VM};
 
 
 type RunFunc = fn (vm: &mut VM, prefixes: BitPrefix, op: u8) -> Option<()>;
@@ -37,6 +37,26 @@ fn run_mov(vm: &mut VM, _prefixes: BitPrefix, op: u8) -> Option<()> {
     }
     Some(())
 }
+fn run_cmp(vm: &mut VM, _prefixes: BitPrefix, op: u8) -> Option<()> {
+    let a: u32;
+    let b: u32;
+    match op {
+        0x3D => {
+            let mut r = Reader::new(&vm.ram[vm.rip as usize..]);
+            a = vm.gprs[GPRReg::A];
+            b = r.read_u16()? as u32;
+            vm.rip = r.offset_from(&vm.ram).unwrap() as u32;
+        }
+        _ => unreachable!("Invalid")
+    }
+    if a < b  { vm.eflags |= eflags::SF; }
+    if a == b { vm.eflags |= eflags::ZF; }
+    let (_, of) = a.overflowing_sub(b);
+    // I don't know if this is exactly correct but yeah
+    if of { vm.eflags |= eflags::OF; vm.eflags |= eflags::CF; }
+    // TODO: Parity flag 
+    Some(())
+}
 lazy_static! {
     static ref vm_no_prefix: HashMap<u8, RunFunc> = {
         let mut m: HashMap<u8, RunFunc> = HashMap::new();
@@ -44,6 +64,7 @@ lazy_static! {
             m.insert(op, run_mov);
         }
         m.insert(0x01, run_add);
+        m.insert(0x3D, run_cmp);
         m
     };
 }

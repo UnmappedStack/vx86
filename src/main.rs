@@ -13,6 +13,7 @@ mod parse;
 mod run;
 mod vm;
 mod dbg;
+mod eflags;
 
 fn main() -> ExitCode {
     let mut args = env::args();
@@ -44,7 +45,7 @@ fn main() -> ExitCode {
         }
         Ok(v) => v,
     };
-    let mut vm = VM { gprs: [0;8], rip: 0, ram: bytes };
+    let mut vm = VM { gprs: [0;8], rip: 0, ram: bytes, eflags: 0};
     if debug {
         let mut dbg = Dbg::new(vm);
         let stdin = io::stdin();

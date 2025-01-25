@@ -1,9 +1,10 @@
 use crate::reg::DISASM_REG32_MAP;
-
+use crate::eflags::Eflags;
 pub struct VM {
     pub gprs: [u32; 8],
     pub rip: u32,
     pub ram: Vec<u8>,
+    pub eflags: Eflags,
 }
 impl VM {
     pub fn dump_gprs(&self) {
