@@ -21,6 +21,16 @@ fn disasm_add(r: &mut Reader, _prefixes: BitPrefix, op: u8) -> Option<()> {
     }
     Some(())
 }
+fn disasm_jmp(r: &mut Reader, _prefixes: BitPrefix, op: u8) -> Option<()> {
+    println!("diasm jmp");
+    match op {
+        0xE9 => {
+            eprintln!("jmp {}", Modrm(r.read_u8()?).rm() as usize);
+        },
+        _ => todo!("Handle 0x{:02X} in jmp", op),
+    }
+    Some(())
+}
 fn disasm_mov(r: &mut Reader, _prefixes: BitPrefix, op: u8) -> Option<()> {
     // TODO: Replace with a hashmap... I'm too lazy rn
     match op {
@@ -48,6 +58,9 @@ lazy_static! {
         let mut m: HashMap<u8, DisasmFunc> = HashMap::new();
         for op in 0xB8..0xB8+8 {
             m.insert(op, disasm_mov);
+        }
+        for op in [0xEB, 0xE9, 0xFF, 0xEA] {
+            m.insert(op, disasm_jmp);
         }
         m.insert(0x01, disasm_add);
         m.insert(0x3D, disasm_cmp_rax_imm16);
