@@ -17,6 +17,7 @@ impl VM {
             }
             eprint!("{}={:08X}", DISASM_REG32_MAP[i as usize], gpr)
         }
+        eprintln!()
     }
 }
 
